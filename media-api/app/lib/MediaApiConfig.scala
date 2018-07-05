@@ -1,5 +1,8 @@
 package lib
 
+import com.amazonaws.Protocol
+import com.amazonaws.ClientConfiguration
+import com.amazonaws.client.builder.AwsClientBuilder
 import com.amazonaws.services.ec2.{AmazonEC2, AmazonEC2ClientBuilder}
 import com.gu.mediaservice.lib.config.CommonConfig
 import com.gu.mediaservice.lib.elasticsearch.EC2._
@@ -24,7 +27,17 @@ class MediaApiConfig(override val configuration: Configuration) extends CommonCo
   lazy val quotaStoreKey: String = properties("quota.store.key")
   lazy val quotaStoreConfig: StoreConfig = StoreConfig(configBucket, quotaStoreKey)
 
-  private lazy val ec2Client: AmazonEC2 = withAWSCredentials(AmazonEC2ClientBuilder.standard()).build()
+  /* DEICHMAN MOD - rewrite EC2 aws builder
+  private lazy val ec2Client: AmazonEC2 = withAWSCredentials(AmazonEC2ClientBuilder.standard())
+    .withClientConfiguration(new ClientConfiguration.withProtocol(Protocol.HTTP).withPathStyleAccessEnabled(true))
+    .build()
+  */
+  private lazy val ec2Client = AmazonEC2ClientBuilder.standard()
+    .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration("http://minio", "deichman"))
+    .withClientConfiguration(new ClientConfiguration()
+      .withProtocol(Protocol.HTTP)
+    )
+    .build()
 
   val elasticsearchHost: String =
     if (stage == "DEV")

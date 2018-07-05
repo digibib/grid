@@ -4,7 +4,7 @@ import java.net.URI
 
 import com.gu.mediaservice.lib.argo.ArgoHelpers
 import com.gu.mediaservice.lib.argo.model.Link
-import com.gu.mediaservice.lib.auth.Authentication.PandaUser
+//import com.gu.mediaservice.lib.auth.Authentication.PandaUser
 import com.gu.mediaservice.lib.auth.{Authentication, Permissions, PermissionsHandler}
 import com.gu.pandomainauth.service.GoogleAuthException
 import play.api.Logger
@@ -30,14 +30,22 @@ class AuthController(auth: Authentication, val config: AuthConfig,
     )
     respond(indexData, indexLinks)
   }
-
+  /*def session = { request =>
+    val user = request.user
+    val firstName = "John"
+    val lastName = "Doe"
+      respond(Json.obj("user" -> Json.obj(
+        "name" -> s"$firstName $lastName",
+        "firstName" -> firstName,
+        "lastName" -> lastName)))
+  }*/
   def index = auth.AuthAction { indexResponse }
+  /* DEICHMAN MOD : disable panda, auth and login
 
   def session = auth.AuthAction.async { request =>
     val user = request.user
     val firstName = user.firstName
     val lastName = user.lastName
-
     hasPermission(PandaUser(request.user), Permissions.ShowPaid) map { showPaid =>
       respond(
         Json.obj("user" ->
@@ -97,4 +105,5 @@ class AuthController(auth: Authentication, val config: AuthConfig,
   def logout = Action { implicit request =>
     auth.processLogout
   }
+  */
 }

@@ -1,4 +1,4 @@
-#!/bin/bash -x
+#!/bin/bash -e
 
 GU_DIR=/etc/gu
 ASW_DIR=$HOME/.aws
@@ -69,10 +69,10 @@ cat <<EOF | tee ${GU_DIR}/kahuna.properties
 domain.root=${DOMAIN_ROOT}
 aws.region=${AWS_REGION}
 auth.keystore.bucket=keybucket
-origin.full=minio:9000/imagebucket
-origin.thumb=minio:9000/thumbbucket
-origin.images=minio:9000/imagebucket
-origin.crops=minio:9000/imagebucket
+origin.full=minio/imagebucket
+origin.thumb=minio/thumbbucket
+origin.images=minio/imagebucket
+origin.crops=minio/imagebucket
 EOF
 
 cat <<EOF | tee ${GU_DIR}/leases.properties
@@ -100,6 +100,9 @@ persistence.identifier=picdarUrn
 mixpanel.token={{mixpanel_token}}
 es.host=elasticsearch
 es.index.aliases.read=readAlias
+example.image.id=id-abc
+quota.store.key=quotaxxx
+s3.usagemail.bucket=usagemail-bucket
 EOF
 
 cat <<EOF | tee ${GU_DIR}/metadata-editor.properties

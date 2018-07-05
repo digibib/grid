@@ -7,8 +7,9 @@ import com.gu.mediaservice.lib.config.CommonConfig
 class ImageIngestOperations(imageBucket: String, thumbnailBucket: String, config: CommonConfig)
   extends S3ImageStorage(config) {
 
-  def storeOriginal(id: String, file: File, mimeType: Option[String], meta: Map[String, String] = Map.empty) =
+  def storeOriginal(id: String, file: File, mimeType: Option[String], meta: Map[String, String] = Map.empty) = {
     storeImage(imageBucket, fileKeyFromId(id), file, mimeType, meta)
+  }
 
   def storeThumbnail(id: String, file: File, mimeType: Option[String]) =
     storeImage(thumbnailBucket, fileKeyFromId(id), file, mimeType)

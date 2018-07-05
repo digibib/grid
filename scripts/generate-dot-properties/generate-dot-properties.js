@@ -13,8 +13,13 @@ function getCloudformationStackOutput() {
         }),
         region: defaultConfig.aws.region
     });
-
+    /* DEICHMAN MOD - allow local endpoint
     const cloudformation = new AWS.CloudFormation();
+    */
+    const cloudformation = new AWS.CloudFormation({
+      endpoint: 'minio:9000'
+    });
+
 
     return cloudformation.describeStacks({StackName: defaultConfig.aws.stackName}).promise();
 }

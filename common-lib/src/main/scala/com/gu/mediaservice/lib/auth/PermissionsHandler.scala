@@ -1,7 +1,7 @@
 package com.gu.mediaservice.lib.auth
 
 import com.gu.editorial.permissions.client._
-import com.gu.mediaservice.lib.auth.Authentication.{AuthenticatedService, PandaUser, Principal}
+import com.gu.mediaservice.lib.auth.Authentication.{AuthenticatedService, Principal}
 import com.gu.mediaservice.lib.config.CommonConfig
 import org.slf4j.LoggerFactory
 
@@ -17,6 +17,7 @@ trait PermissionsHandler {
   private val permissions = new Permissions(config.stage, config.awsCredentials)
 
   def hasPermission(user: Principal, permission: Permission)(implicit ec: ExecutionContext): Future[Boolean] = {
+  /* DEICHMAN MOD : always successful login
     user match {
       case PandaUser(u) => {
         permissions.get(permission)(PermissionsUser(u.email)).map {
@@ -33,6 +34,7 @@ trait PermissionsHandler {
       // think about only allowing certain services i.e. on `service.name`?
       case AuthenticatedService(_) => Future.successful(true)
       case _ => Future.successful(false)
-    }
+    }*/
+    Future.successful(true)
   }
 }

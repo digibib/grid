@@ -30,5 +30,7 @@ abstract class GridComponents(context: Context) extends BuiltInComponentsFromCon
   )
 
   val management = new Management(controllerComponents)
-  val auth = new Authentication(config, actorSystem, defaultBodyParser, wsClient, controllerComponents, executionContext)
+  // DEICHMAN MOD: remove wsClient and controllerComponents
+  // val auth = new Authentication(config, actorSystem, defaultBodyParser, wsClient, controllerComponents, executionContext)
+  val auth = new Authentication(config, actorSystem, defaultBodyParser, executionContext)
 }

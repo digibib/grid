@@ -5,7 +5,9 @@ import java.net.URI
 import com.gu.editorial.permissions.client.Permission
 import com.gu.mediaservice.lib.argo._
 import com.gu.mediaservice.lib.argo.model._
-import com.gu.mediaservice.lib.auth.Authentication.{AuthenticatedService, PandaUser, Principal}
+// DEICHMAN MOD : disable panda
+//import com.gu.mediaservice.lib.auth.Authentication.{AuthenticatedService, PandaUser, Principal}
+import com.gu.mediaservice.lib.auth.Authentication.{AuthenticatedService, Principal}
 import com.gu.mediaservice.lib.auth._
 import com.gu.mediaservice.lib.cleanup.{MetadataCleaners, SupplierProcessors}
 import com.gu.mediaservice.lib.config.MetadataConfig
@@ -63,7 +65,7 @@ class MediaApi(auth: Authentication, notifications: Notifications, elasticSearch
   private val ImageCannotBeDeleted = respondError(MethodNotAllowed, "cannot-delete", "Cannot delete persisted images")
   private val ImageDeleteForbidden = respondError(Forbidden, "delete-not-allowed", "No permission to delete this image")
   private val ImageEditForbidden = respondError(Forbidden, "edit-not-allowed", "No permission to edit this image")
-  private def ImageNotFound(id: String) = respondError(NotFound, "image-not-found", s"No image found with the given id $id")
+  private val ImageNotFound = respondError(NotFound, "image-not-found", "No image found with the given id")
   private val ExportNotFound = respondError(NotFound, "export-not-found", "No export found with the given id")
 
   def index = auth { indexResponse }
@@ -80,12 +82,14 @@ class MediaApi(auth: Authentication, notifications: Notifications, elasticSearch
     permission: Permission
   ) = {
     request.user match {
+      /* DEICHMAN MOD : allow all
       case user: PandaUser =>
         (source \ "uploadedBy").asOpt[String] match {
           case Some(uploader) if user.user.email.toLowerCase == uploader.toLowerCase => Future.successful(true)
           case _ => hasPermission(user, permission)
         }
       case _: AuthenticatedService => Future.successful(true)
+      */
       case _ => Future.successful(false)
     }
   }
@@ -98,10 +102,10 @@ class MediaApi(auth: Authentication, notifications: Notifications, elasticSearch
     isUploaderOrHasPermission(request, source, Permissions.DeleteImage)
   }
 
-  private def isAvailableForSyndication(image: Image): Boolean = image.syndicationRights.exists(_.isAvailableForSyndication)
+  private def isSyndicateable(json: JsValue): Boolean = (json \ "syndicationRights" \ "rights" \ "acquired").validate[Boolean].getOrElse(false)
 
   private def hasPermission(request: Authentication.Request[Any], json: JsValue): Boolean = request.user.apiKey.tier match {
-    case Syndication => isAvailableForSyndication(json.as[Image])
+    case Syndication => isSyndicateable(json)
     case _ => true
   }
 
@@ -119,7 +123,7 @@ class MediaApi(auth: Authentication, notifications: Notifications, elasticSearch
               imageResponse.create(id, source, writePermission, deletePermission, include, request.user.apiKey.tier)
             respond(imageData, imageLinks, imageActions)
         }
-      case _ => Future.successful(ImageNotFound(id))
+      case _ => Future.successful(ImageNotFound)
     }
   }
 
@@ -130,7 +134,7 @@ class MediaApi(auth: Authentication, notifications: Notifications, elasticSearch
           Link("image", s"${config.rootUri}/images/$id")
         )
         respond((source \ "fileMetadata").getOrElse(JsNull), links)
-      case _ => ImageNotFound(id)
+      case _ => ImageNotFound
     }
   }
 
@@ -141,7 +145,7 @@ class MediaApi(auth: Authentication, notifications: Notifications, elasticSearch
           Link("image", s"${config.rootUri}/images/$id")
         )
         respond((source \ "exports").getOrElse(JsNull), links)
-      case _ => ImageNotFound(id)
+      case _ => ImageNotFound
     }
   }
 
@@ -150,7 +154,7 @@ class MediaApi(auth: Authentication, notifications: Notifications, elasticSearch
       case Some(source) if hasPermission(request, source) =>
         val exportOption = source.as[Image].exports.find(_.id.contains(exportId))
         exportOption.foldLeft(ExportNotFound)((memo, export) => respond(export))
-      case _ => ImageNotFound(imageId)
+      case _ => ImageNotFound
     }
 
   }
@@ -174,7 +178,7 @@ class MediaApi(auth: Authentication, notifications: Notifications, elasticSearch
           Future.successful(ImageCannotBeDeleted)
         }
 
-      case _ => Future.successful(ImageNotFound(id))
+      case _ => Future.successful(ImageNotFound)
     }
   }
 
@@ -214,7 +218,7 @@ class MediaApi(auth: Authentication, notifications: Notifications, elasticSearch
             ImageEditForbidden
           }
         }
-      case None => Future.successful(ImageNotFound(id))
+      case None => Future.successful(ImageNotFound)
     }
   }
 

@@ -4,7 +4,7 @@ import java.io.File
 import java.util.UUID
 
 import com.amazonaws.auth.profile.ProfileCredentialsProvider
-import com.amazonaws.auth.{AWSCredentialsProviderChain, InstanceProfileCredentialsProvider}
+import com.amazonaws.auth.{AWSCredentialsProviderChain, EnvironmentVariableCredentialsProvider, InstanceProfileCredentialsProvider}
 import com.amazonaws.client.builder.AwsClientBuilder
 import play.api.Configuration
 
@@ -17,7 +17,8 @@ trait CommonConfig {
 
   lazy val properties: Map[String, String] = Properties.fromPath(s"/etc/gu/$appName.properties")
 
-  final val awsEndpoint = "ec2.eu-west-1.amazonaws.com"
+  //final val awsEndpoint = "ec2.eu-west-1.amazonaws.com"
+  final val awsEndpoint = "minio"
   final val elasticsearchStack = "media-service"
   final val elasticsearchApp = "elasticsearch"
   final val stackName = "media-service"
@@ -25,6 +26,7 @@ trait CommonConfig {
   final val sessionId = UUID.randomUUID().toString
 
   lazy val awsCredentials = new AWSCredentialsProviderChain(
+    new EnvironmentVariableCredentialsProvider(),
     new ProfileCredentialsProvider("media-service"),
     InstanceProfileCredentialsProvider.getInstance()
   )
@@ -32,7 +34,8 @@ trait CommonConfig {
   lazy val awsRegion = properties.getOrElse("aws.region", "eu-west-1")
 
   def withAWSCredentials[T, S <: AwsClientBuilder[S, T]](builder: AwsClientBuilder[S, T]): S = builder
-    .withRegion(awsRegion)
+    // DEICHMAN MOD : FIX ENDPONT
+    .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(s"http://$awsEndpoint", "deichman"))
     .withCredentials(awsCredentials)
 
   final val stage: String = stageFromFile getOrElse "DEV"

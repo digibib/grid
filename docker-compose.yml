@@ -37,8 +37,6 @@ services:
       context: ./imgops/dev
     ports:
       - "9008:80"
-    depends_on:
-      - minio
     networks:
       - grid
     volumes:
@@ -62,12 +60,12 @@ services:
       - minio_data:/data
       - minio_cfg:/root/.minio
     ports:
-      - "9000:9000"
+      - "9000:80"
     command:
       - "minio"
       - "server"
       - "--address"
-      - ":9000"
+      - ":80"
       - "/data"
 
   grid:
@@ -91,7 +89,7 @@ services:
       AWS_ACCESS_KEY_ID: "${AWS_ACCESS_KEY_ID}"
       AWS_SECRET_ACCESS_KEY: "${AWS_SECRET_ACCESS_KEY}"
     entrypoint: /entrypoint.sh
-    stdin_open: true # hack for scala apps not to exit immediately
+    # stdin_open: true # hack for scala apps not to exit immediately
     volumes:
       - configs-vol:/configs
       - ivy-vol:/root/.ivy2

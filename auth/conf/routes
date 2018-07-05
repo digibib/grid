@@ -4,10 +4,10 @@
 
 GET     /                           auth.AuthController.index
 
-GET     /login                      auth.AuthController.doLogin(redirectUri: Option[String])
-GET     /oauthCallback              auth.AuthController.oauthCallback
-GET     /logout                     auth.AuthController.logout
-GET     /session                    auth.AuthController.session
+#GET     /login                      auth.AuthController.doLogin(redirectUri: Option[String])
+#GET     /oauthCallback              auth.AuthController.oauthCallback
+#GET     /logout                     auth.AuthController.logout
+#GET     /session                    auth.AuthController.session
 
 # Management
 GET     /management/healthcheck     com.gu.mediaservice.lib.management.Management.healthCheck

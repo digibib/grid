@@ -4,7 +4,9 @@ import java.io.File
 import java.net.{URI, URLEncoder}
 import java.nio.charset.{Charset, StandardCharsets}
 
+import com.amazonaws.Protocol
 import com.amazonaws.ClientConfiguration
+import com.amazonaws.client.builder.AwsClientBuilder
 import com.amazonaws.services.s3.model._
 import com.amazonaws.services.s3.{AmazonS3, AmazonS3ClientBuilder}
 import com.gu.mediaservice.lib.config.CommonConfig
@@ -23,7 +25,8 @@ class S3(config: CommonConfig) {
   type Key = String
   type UserMetadata = Map[String, String]
 
-  val s3Endpoint = "s3.amazonaws.com"
+  //val s3Endpoint = "s3.amazonaws.com"
+  val s3Endpoint = "minio"
 
   lazy val client: AmazonS3 = buildS3Client()
 
@@ -135,8 +138,9 @@ class S3(config: CommonConfig) {
   }
 
   private def objectUrl(bucket: Bucket, key: Key): URI = {
-    val bucketUrl = s"$bucket.$s3Endpoint"
-    new URI("http", bucketUrl, s"/$key", null)
+    val bucketUrl = s"$s3Endpoint/$bucket"
+    val uri = new URI("http", bucketUrl, s"/$key", null)
+    return uri;
   }
 
   private def buildS3Client(): AmazonS3 = {
@@ -144,9 +148,14 @@ class S3(config: CommonConfig) {
     // imgops proxies direct to S3, passing the AWS security signature as query parameters
     // This does not work with AWS v4 signatures, presumably because the signature includes the host
     val clientConfig = new ClientConfiguration()
+      .withProtocol(Protocol.HTTP)
     clientConfig.setSignerOverride("S3SignerType")
 
-    val builder = AmazonS3ClientBuilder.standard().withClientConfiguration(clientConfig)
+    val builder = AmazonS3ClientBuilder
+      .standard()
+      .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(s"http://$s3Endpoint", "deichman"))
+      .withPathStyleAccessEnabled(true)
+      .withClientConfiguration(clientConfig)
 
     config.withAWSCredentials(builder).build()
   }

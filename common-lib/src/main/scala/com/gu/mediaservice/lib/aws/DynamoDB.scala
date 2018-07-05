@@ -6,6 +6,7 @@ import com.amazonaws.services.dynamodbv2.document.utils.ValueMap
 import com.amazonaws.services.dynamodbv2.document.{DynamoDB => AwsDynamoDB, _}
 import com.amazonaws.services.dynamodbv2.model.ReturnValue
 import com.amazonaws.services.dynamodbv2.{AmazonDynamoDBAsync, AmazonDynamoDBAsyncClientBuilder}
+import com.amazonaws.client.builder.AwsClientBuilder
 import com.gu.mediaservice.lib.config.CommonConfig
 import play.api.libs.json._
 
@@ -16,7 +17,13 @@ object NoItemFound extends Throwable("item not found")
 
 class DynamoDB(config: CommonConfig, tableName: String) {
 
+  /* DEICHMAN MOD - allow minio endpoint
   lazy val client: AmazonDynamoDBAsync = config.withAWSCredentials(AmazonDynamoDBAsyncClientBuilder.standard()).build()
+  */
+
+  lazy val client: AmazonDynamoDBAsync = config.withAWSCredentials(AmazonDynamoDBAsyncClientBuilder.standard())
+    .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration("http://minio", "deichman"))
+    .build()
   lazy val dynamo = new AwsDynamoDB(client)
   lazy val table: Table = dynamo.getTable(tableName)
 
