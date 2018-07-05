@@ -1,4 +1,21 @@
 version: '3'
+volumes:
+  configs-vol:
+    driver: local
+  ivy-vol:
+    driver: local
+  sbt-vol:
+    driver: local
+  minio_data:
+    driver: local
+  minio_cfg:
+    driver: local
+
+networks:
+  grid:
+    driver: bridge
+
+
 services:
   elasticsearch:
     build:
@@ -6,16 +23,76 @@ services:
     ports:
       - "9200:9200"
       - "9300:9300"
+    networks:
+      - grid
     volumes:
       - "./elasticsearch/dev/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml"
     ulimits:
       memlock:
         soft: -1
         hard: -1
+
   imgops:
     build:
       context: ./imgops/dev
     ports:
       - "9008:80"
+    depends_on:
+      - minio
+    networks:
+      - grid
     volumes:
       - "./imgops/dev/nginx.conf:/etc/nginx/nginx.conf"
+
+  minio:
+    image: minio/minio:edge
+    networks:
+      grid:
+        aliases:
+          - amazonaws.com
+          - s3.amazonaws.com
+          - s3.eu-west-1.amazonaws.com
+          - ec2.eu-west-1.amazonaws.com
+          - pan-domain-auth-settings.s3.eu-west-1.amazonaws.com
+    environment:
+      MINIO_DOMAIN: minio
+      MINIO_ACCESS_KEY: "${AWS_ACCESS_KEY_ID}"
+      MINIO_SECRET_KEY: "${AWS_SECRET_ACCESS_KEY}"
+    volumes:
+      - minio_data:/data
+      - minio_cfg:/root/.minio
+    ports:
+      - "9000:9000"
+    command:
+      - "minio"
+      - "server"
+      - "--address"
+      - ":9000"
+      - "/data"
+
+  grid:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "9001:9001" # api.media
+      - "9003:9003" # loader.media
+      - "9005:9005" # media
+      - "9006:9006" # cropper.media
+      - "9007:9007" # media.metadata
+      - "9009:9009" # media.collections
+      - "9010:9010" # media.auth
+      - "9011:9011" # media.leases
+    networks:
+      - grid
+    environment:
+      DOMAIN_ROOT: "${DOMAIN_ROOT}"
+      AWS_REGION: "${AWS_REGION}"
+      AWS_ACCESS_KEY_ID: "${AWS_ACCESS_KEY_ID}"
+      AWS_SECRET_ACCESS_KEY: "${AWS_SECRET_ACCESS_KEY}"
+    entrypoint: /entrypoint.sh
+    stdin_open: true # hack for scala apps not to exit immediately
+    volumes:
+      - configs-vol:/configs
+      - ivy-vol:/root/.ivy2
+      - sbt-vol:/root/.sbt
